@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Employee Attrition Predictor</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+/* ===== Base Styles ===== */
+:root {
+  --primary: #06b6d4;
+  --primary-dark: #0891b2;
+  --secondary: #3b82f6;
+  --success: #22c55e;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --dark-bg: #0f172a;
+  --dark-card: #1e293b;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: var(--dark-bg);
+  color: var(--text-primary);
+  scroll-behavior: smooth;
+  line-height: 1.6;
+}
+
+a { 
+  text-decoration: none; 
+  color: var(--text-primary);
+}
+
+/* ===== Layout ===== */
+.container {
+  max-width: 1200px;
+  margin: 100px auto 40px auto;
+  padding: 0 20px;
+}
+
+section { 
+  padding: 40px 0; 
+  scroll-margin-top: 80px;
+}
+
+/* ===== Navbar ===== */
+.navbar {
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 15px 30px;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.navbar.scrolled {
+  padding: 10px 30px;
+  background: rgba(15, 23, 42, 0.98);
+}
+
+.navbar .logo { 
+  font-weight: 700; 
+  font-size: 22px; 
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 25px;
+}
+
+.navbar a {
+  font-weight: 500;
+  position: relative;
+  transition: all 0.3s ease;
+  font-size: 15px;
+  padding: 5px 0;
+}
+
+.navbar a::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: 0;
+  left: 0;
+  background: var(--primary);
+  transition: width 0.3s ease;
+}
+
+.navbar a:hover::after {
+  width: 100%;
+}
+
+.navbar a:hover {
+  color: var(--primary);
+}
+
+.navbar a.active {
+  color: var(--primary);
+}
+
+.navbar a.active::after {
+  width: 100%;
+}
+
+.menu-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 30px;
+  height: 21px;
+  cursor: pointer;
+}
+
+.menu-toggle span {
+  height: 3px;
+  width: 100%;
+  background-color: var(--text-primary);
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+
+/* ===== Cards ===== */
+.card {
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  margin-bottom: 30px;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: var(--gradient);
+  opacity: 0.8;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.card-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: var(--gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+/* ===== Typography ===== */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  margin-top: 0;
+}
+
+h1 {
+  font-size: 2.5rem;
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin-bottom: 15px;
+}
+
+h2 {
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+}
+
+h3 {
+  font-size: 1.4rem;
+  margin-bottom: 15px;
+}
+
+p, li {
+  color: var(--text-secondary);
+}
+
+ul {
+  padding-left: 20px;
+}
+
+ul li {
+  margin: 10px 0;
+  position: relative;
+}
+
+ul li::before {
+  content: '•';
+  color: var(--primary);
+  font-weight: bold;
+  display: inline-block;
+  width: 1em;
+  margin-left: -1em;
+}
+
+/* ===== Forms ===== */
+.form-group {
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.4);
+  color: var(--text-primary);
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+  background: rgba(15, 23, 42, 0.6);
+}
+
+select.form-control {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
+}
+
+/* ===== Buttons ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: all 0.5s ease;
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-primary {
+  background: var(--gradient);
+  color: white;
+}
+
+.btn-success {
+  background: var(--success);
+  color: white;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+}
+
+.btn-outline:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* ===== Alerts ===== */
+.alert {
+  padding: 16px;
+  border-radius: 12px;
+  font-weight: 500;
+  margin-top: 20px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.alert-success {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--success);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.alert-danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* ===== Table ===== */
+.table-container {
+  overflow: auto;
+  border-radius: 12px;
+  margin: 20px 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  min-width: 600px;
+}
+
+th, td {
+  padding: 12px 15px;
+  text-align: left;
+}
+
+th {
+  background: rgba(15, 23, 42, 0.5);
+  font-weight: 600;
+  color: var(--text-primary);
+  position: sticky;
+  top: 0;
+}
+
+tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+tr:last-child {
+  border-bottom: none;
+}
+
+tr:hover {
+  background: rgba(15, 23, 42, 0.3);
+}
+
+/* ===== Chart ===== */
+.chart-container {
+  position: relative;
+  height: 350px;
+  margin: 30px 0;
+}
+
+.chart-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.chart-controls .btn {
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+/* ===== File Upload ===== */
+.file-upload {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.file-upload input[type="file"] {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.file-upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.3);
+  transition: all 0.3s ease;
+  text-align: center;
+  cursor: pointer;
+}
+
+.file-upload-label:hover {
+  border-color: var(--primary);
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.file-upload-icon {
+  font-size: 40px;
+  margin-bottom: 15px;
+  color: var(--text-muted);
+}
+
+.file-upload-label:hover .file-upload-icon {
+  color: var(--primary);
+}
+
+/* ===== Footer ===== */
+footer {
+  text-align: center;
+  color: var(--text-muted);
+  margin-top: 60px;
+  padding: 30px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 14px;
+}
+
+/* ===== Grid System ===== */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -15px;
+}
+
+.col {
+  flex: 1;
+  padding: 0 15px;
+  min-width: 300px;
+  margin-bottom: 30px;
+}
+
+/* ===== Animations ===== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.6s ease forwards;
+}
+
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+.delay-4 { animation-delay: 0.4s; }
+
+/* ===== Responsive ===== */
+@media (max-width: 992px) {
+  .navbar {
+    padding: 12px 20px;
+  }
+  
+  .nav-links {
+    position: fixed;
+    top: 70px;
+    left: -100%;
+    width: 100%;
+    height: calc(100vh - 70px);
+    background: var(--dark-bg);
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 40px 20px;
+    gap: 30px;
+    transition: all 0.4s ease;
+    z-index: 999;
+  }
+  
+  .nav-links.active {
+    left: 0;
+  }
+  
+  .menu-toggle {
+    display: flex;
+  }
+  
+  .menu-toggle.active span:nth-child(1) {
+    transform: translateY(9px) rotate(45deg);
+  }
+  
+  .menu-toggle.active span:nth-child(2) {
+    opacity: 0;
+  }
+  
+  .menu-toggle.active span:nth-child(3) {
+    transform: translateY(-9px) rotate(-45deg);
+  }
+  
+  h1 {
+    font-size: 2rem;
+  }
+  
+  h2 {
+    font-size: 1.6rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .container {
+    padding: 0 15px;
+  }
+  
+  .card {
+    padding: 20px;
+  }
+  
+  .btn {
+    padding: 12px 20px;
+  }
+  
+  .chart-controls {
+    justify-content: center;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== Navbar ===== -->
+<nav class="navbar">
+  <div class="logo">
+    <i class="fas fa-chart-line"></i>
+    <span>Attrition Predictor</span>
+  </div>
+  
+  <div class="nav-links">
+    <a href="#home" class="active"><i class="fas fa-home"></i> Home</a>
+    <a href="#single"><i class="fas fa-user"></i> Single Predict</a>
+    <a href="#batch"><i class="fas fa-file-csv"></i> Batch Upload</a>
+    <a href="#visualization"><i class="fas fa-chart-pie"></i> Visualization</a>
+    <a href="#features"><i class="fas fa-star"></i> Features</a>
+    <a href="#about"><i class="fas fa-info-circle"></i> About</a>
+    <a href="#contact"><i class="fas fa-envelope"></i> Contact</a>
+  </div>
+  
+  <div class="menu-toggle">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</nav>
+
+<!-- ===== Home Section ===== -->
+<section id="home" class="container">
+  <div class="card fade-in">
+    <div style="text-align: center; padding: 30px 20px;">
+      <h1>👨‍💼 Employee Attrition Prediction</h1>
+      <p style="font-size: 18px; max-width: 800px; margin: 0 auto 30px;">Advanced analytics platform to predict employee turnover and identify at-risk employees with machine learning</p>
+      
+      <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+        <a href="#single" class="btn btn-primary"><i class="fas fa-user"></i> Single Prediction</a>
+        <a href="#batch" class="btn btn-outline"><i class="fas fa-file-csv"></i> Batch Analysis</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Single Prediction Section ===== -->
+<section id="single" class="container">
+  <div class="card fade-in">
+    <div class="card-header">
+      <div class="card-icon">
+        <i class="fas fa-user"></i>
+      </div>
+      <div>
+        <h2>Single Employee Prediction</h2>
+        <p style="margin: 0;">Predict attrition risk for an individual employee</p>
+      </div>
+    </div>
+    
+    <form id="singleForm">
+      <div class="row">
+        <div class="col">
+          <div class="form-group">
+            <label for="age">Age</label>
+            <input type="number" id="age" class="form-control" value="30" min="18" max="65">
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-group">
+            <label for="income">Monthly Income ($)</label>
+            <input type="number" id="income" class="form-control" value="5000" min="1000" step="500">
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col">
+          <div class="form-group">
+            <label for="years">Years at Company</label>
+            <input type="number" id="years" class="form-control" value="3" min="0" max="40">
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-group">
+            <label for="gender">Gender</label>
+            <select id="gender" class="form-control">
+              <option>Male</option>
+              <option>Female</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col">
+          <div class="form-group">
+            <label for="overtime">OverTime</label>
+            <select id="overtime" class="form-control">
+              <option>No</option>
+              <option>Yes</option>
+            </select>
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-group">
+            <label for="jobRole">Job Role</label>
+            <select id="jobRole" class="form-control">
+              <option>Sales Executive</option>
+              <option>Research Scientist</option>
+              <option>Laboratory Technician</option>
+              <option>Manager</option>
+              <option>Human Resources</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="department">Department</label>
+        <select id="department" class="form-control">
+          <option>Sales</option>
+          <option>Research & Development</option>
+          <option>Human Resources</option>
+        </select>
+      </div>
+      
+      <button type="button" class="btn btn-primary btn-block" onclick="predictSingle()">
+        <i class="fas fa-search"></i> Predict Attrition Risk
+      </button>
+    </form>
+    
+    <div id="singleResult" class="alert" style="display:none;"></div>
+  </div>
+</section>
+
+<!-- ===== Batch Upload Section ===== -->
+<section id="batch" class="container">
+  <div class="card fade-in">
+    <div class="card-header">
+      <div class="card-icon">
+        <i class="fas fa-file-csv"></i>
+      </div>
+      <div>
+        <h2>Batch CSV Upload</h2>
+        <p style="margin: 0;">Upload a CSV file to analyze multiple employees at once</p>
+      </div>
+    </div>
+    
+    <div class="file-upload">
+      <input type="file" id="csvFile" accept=".csv">
+      <label for="csvFile" class="file-upload-label">
+        <div class="file-upload-icon">
+          <i class="fas fa-cloud-upload-alt"></i>
+        </div>
+        <h4>Upload CSV File</h4>
+        <p>Drag & drop your file here or click to browse</p>
+        <p style="font-size: 12px; color: var(--text-muted);">Supported format: .csv</p>
+      </label>
+    </div>
+    
+    <button class="btn btn-primary btn-block" onclick="parseCSV()">
+      <i class="fas fa-eye"></i> Preview Data
+    </button>
+    
+    <div id="preview" style="display:none; margin-top:30px;">
+      <h4>Preview (first 5 rows)</h4>
+      <div class="table-container">
+        <table id="dataTable"></table>
+      </div>
+      
+      <div style="display: flex; gap: 15px; margin-top: 20px;">
+        <button class="btn btn-success" onclick="runBatch()" style="flex: 1;">
+          <i class="fas fa-cogs"></i> Run Predictions
+        </button>
+        <button class="btn btn-outline" id="downloadBtn" style="display:none; flex: 1;">
+          <i class="fas fa-download"></i> Download Results
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Visualization Section ===== -->
+<section id="visualization" class="container">
+  <div class="card fade-in">
+    <div class="card-header">
+      <div class="card-icon">
+        <i class="fas fa-chart-pie"></i>
+      </div>
+      <div>
+        <h2>Data Visualization</h2>
+        <p style="margin: 0;">Visual representation of attrition patterns and trends</p>
+      </div>
+    </div>
+    
+    <div class="chart-controls">
+      <button class="btn btn-outline active" onclick="changeChartType('pie')">
+        <i class="fas fa-chart-pie"></i> Pie Chart
+      </button>
+      <button class="btn btn-outline" onclick="changeChartType('bar')">
+        <i class="fas fa-chart-bar"></i> Bar Chart
+      </button>
+      <button class="btn btn-outline" onclick="changeChartType('line')">
+        <i class="fas fa-chart-line"></i> Trend Analysis
+      </button>
+      <button class="btn btn-outline" onclick="changeChartType('radar')">
+        <i class="fas fa-bullseye"></i> Factor Analysis
+      </button>
+    </div>
+    
+    <div class="chart-container">
+      <canvas id="chart"></canvas>
+    </div>
+    
+    <div id="chartExplanation" style="margin-top: 20px; padding: 15px; background: rgba(15, 23, 42, 0.4); border-radius: 12px;">
+      <h4><i class="fas fa-info-circle"></i> Chart Interpretation</h4>
+      <p id="explanationText">The pie chart shows the distribution of employees who are predicted to leave versus those who are predicted to stay. This helps visualize the overall attrition risk in your organization.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Features Section ===== -->
+<section id="features" class="container">
+  <div class="card fade-in">
+    <div class="card-header">
+      <div class="card-icon">
+        <i class="fas fa-star"></i>
+      </div>
+      <div>
+        <h2>Project Features</h2>
+        <p style="margin: 0;">Key capabilities of our attrition prediction system</p>
+      </div>
+    </div>
+    
+    <div class="row">
+      <div class="col">
+        <div style="background: rgba(15, 23, 42, 0.4); padding: 20px; border-radius: 12px; height: 100%;">
+          <h4><i class="fas fa-user" style="color: var(--primary);"></i> Individual Analysis</h4>
+          <p>Predict attrition risk for individual employees based on key parameters and characteristics.</p>
+        </div>
+      </div>
+      <div class="col">
+        <div style="background: rgba(15, 23, 42, 0.4); padding: 20px; border-radius: 12px; height: 100%;">
+          <h4><i class="fas fa-users" style="color: var(--primary);"></i> Batch Processing</h4>
+          <p>Analyze entire teams or departments by uploading CSV files with employee data.</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="row">
+      <div class="col">
+        <div style="background: rgba(15, 23, 42, 0.4); padding: 20px; border-radius: 12px; height: 100%;">
+          <h4><i class="fas fa-chart-bar" style="color: var(--primary);"></i> Data Visualization</h4>
+          <p>Interactive charts and graphs to visualize attrition patterns and trends.</p>
+        </div>
+      </div>
+      <div class="col">
+        <div style="background: rgba(15, 23, 42, 0.4); padding: 20px; border-radius: 12px; height: 100%;">
+          <h4><i class="fas fa-download" style="color: var(--primary);"></i> Export Results</h4>
+          <p>Download prediction results for further analysis or reporting purposes.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== About Section ===== -->
+<section id="about" class="container">
+  <div class="card fade-in" style="text-align: center;">
+    <div class="card-header" style="justify-content: center;">
+      <div class="card-icon">
+        <i class="fas fa-info-circle"></i>
+      </div>
+      <div>
+        <h2>About This Project</h2>
+        <p style="margin: 0;">Understanding our employee attrition prediction system</p>
+      </div>
+    </div>
+    
+    <p>This advanced analytics platform helps organizations predict employee turnover and identify at-risk employees using machine learning algorithms. By analyzing various factors such as job role, income, tenure, and work-life balance, our system provides actionable insights to reduce attrition rates and improve employee retention.</p>
+    
+    <div style="max-width: 600px; margin: 30px auto; display: flex; justify-content: center;">
+      <div style="background: var(--gradient); padding: 3px; border-radius: 12px;">
+        <div style="background: var(--dark-card); padding: 20px; border-radius: 10px;">
+          <h4 style="margin-top: 0;">Our Mission</h4>
+          <p style="margin-bottom: 0;">To empower organizations with predictive insights that foster better employee experiences and reduce turnover costs.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Contact Section ===== -->
+<section id="contact" class="container">
+  <div class="card fade-in">
+    <div class="card-header">
+      <div class="card-icon">
+        <i class="fas fa-envelope"></i>
+      </div>
+      <div>
+        <h2>Contact Us</h2>
+        <p style="margin: 0;">Get in touch with our team</p>
+      </div>
+    </div>
+    
+    <div class="row">
+      <div class="col">
+        <div style="background: rgba(15, 23, 42, 0.4); padding: 20px; border-radius: 12px; text-align: center; height: 100%;">
+          <i class="fas fa-envelope" style="font-size: 30px; color: var(--primary); margin-bottom: 15px;"></i>
+          <h4>Email</h4>
+          <p>contact@attritionpredictor.com</p>
+        </div>
+      </div>
+      <div class="col">
+        <div style="background: rgba(15, 23, 42, 0.4); padding: 20px; border-radius: 12px; text-align: center; height: 100%;">
+          <i class="fas fa-phone" style="font-size: 30px; color: var(--primary); margin-bottom: 15px;"></i>
+          <h4>Phone</h4>
+          <p>+1 (555) 123-4567</p>
+        </div>
+      </div>
+      <div class="col">
+        <div style="background: rgba(15, 23, 42, 0.4); padding: 20px; border-radius: 12px; text-align: center; height: 100%;">
+          <i class="fas fa-map-marker-alt" style="font-size: 30px; color: var(--primary); margin-bottom: 15px;"></i>
+          <h4>Office</h4>
+          <p>123 Business Ave, Suite 100<br>San Francisco, CA 94107</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Footer ===== -->
+<footer>
+  <div class="container">
+    <p>Employee Attrition Prediction Platform © 2023 | Powered by Advanced Analytics</p>
+    <p style="font-size: 13px; color: var(--text-muted);">This is a frontend prototype for demonstration purposes</p>
+  </div>
+</footer>
+
+<!-- ===== JS ===== -->
+<script>
+// Navigation
+const menuToggle = document.querySelector('.menu-toggle');
+const navLinks = document.querySelector('.nav-links');
+const navbar = document.querySelector('.navbar');
+
+menuToggle.addEventListener('click', () => {
+  menuToggle.classList.toggle('active');
+  navLinks.classList.toggle('active');
+});
+
+// Close mobile menu when clicking on a link
+document.querySelectorAll('.nav-links a').forEach(link => {
+  link.addEventListener('click', () => {
+    menuToggle.classList.remove('active');
+    navLinks.classList.remove('active');
+  });
+});
+
+// Navbar scroll effect
+window.addEventListener('scroll', () => {
+  if (window.scrollY > 50) {
+    navbar.classList.add('scrolled');
+  } else {
+    navbar.classList.remove('scrolled');
+  }
+});
+
+// Update active nav link based on scroll position
+const sections = document.querySelectorAll('section');
+const navItems = document.querySelectorAll('.nav-links a');
+
+window.addEventListener('scroll', () => {
+  let current = '';
+  
+  sections.forEach(section => {
+    const sectionTop = section.offsetTop;
+    const sectionHeight = section.clientHeight;
+    
+    if (pageYOffset >= sectionTop - 100) {
+      current = section.getAttribute('id');
+    }
+  });
+  
+  navItems.forEach(item => {
+    item.classList.remove('active');
+    if (item.getAttribute('href').substring(1) === current) {
+      item.classList.add('active');
+    }
+  });
+});
+
+// File upload styling
+const fileInput = document.getElementById('csvFile');
+const fileUploadLabel = document.querySelector('.file-upload-label');
+
+fileInput.addEventListener('change', function() {
+  if (this.files.length > 0) {
+    fileUploadLabel.innerHTML = `
+      <div class="file-upload-icon">
+        <i class="fas fa-file-csv" style="color: var(--primary);"></i>
+      </div>
+      <h4>${this.files[0].name}</h4>
+      <p style="color: var(--primary);">File successfully selected</p>
+    `;
+  }
+});
+
+// Chart type management
+let currentChartType = 'pie';
+let attritionChart = null;
+
+function changeChartType(type) {
+  currentChartType = type;
+  
+  // Update button states
+  document.querySelectorAll('.chart-controls .btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  event.target.classList.add('active');
+  
+  // Update the chart
+  if (window.attritionData) {
+    updateChart();
+  } else {
+    // Show sample data if no real data exists
+    showSampleVisualization();
+  }
+}
+
+function updateChart() {
+  const ctx = document.getElementById('chart').getContext('2d');
+  
+  // Destroy previous chart if it exists
+  if (attritionChart) {
+    attritionChart.destroy();
+  }
+  
+  // Update explanation text
+  const explanationText = document.getElementById('explanationText');
+  
+  switch(currentChartType) {
+    case 'pie':
+      explanationText.textContent = "The pie chart shows the distribution of employees who are predicted to leave versus those who are predicted to stay. This helps visualize the overall attrition risk in your organization.";
+      attritionChart = new Chart(ctx, {
+        type: 'pie',
+        data: window.attritionData.pie,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: '#e2e8f0',
+                font: {
+                  family: "'Poppins', sans-serif"
+                }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  let label = context.label || '';
+                  let value = context.raw || 0;
+                  let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  let percentage = Math.round((value / total) * 100);
+                  return `${label}: ${value} (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+      break;
+      
+    case 'bar':
+      explanationText.textContent = "The bar chart compares attrition rates across different departments. This helps identify which departments have the highest risk of employee turnover.";
+      attritionChart = new Chart(ctx, {
+        type: 'bar',
+        data: window.attritionData.bar,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: '#e2e8f0',
+                font: {
+                  family: "'Poppins', sans-serif"
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                color: '#cbd5e1'
+              },
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              }
+            },
+            x: {
+              ticks: {
+                color: '#cbd5e1'
+              },
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              }
+            }
+          }
+        }
+      });
+      break;
+      
+    case 'line':
+      explanationText.textContent = "The line chart shows attrition trends over time. This helps identify seasonal patterns or the impact of company initiatives on employee retention.";
+      attritionChart = new Chart(ctx, {
+        type: 'line',
+        data: window.attritionData.line,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: '#e2e8f0',
+                font: {
+                  family: "'Poppins', sans-serif"
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                color: '#cbd5e1'
+              },
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              }
+            },
+            x: {
+              ticks: {
+                color: '#cbd5e1'
+              },
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              }
+            }
+          }
+        }
+      });
+      break;
+      
+    case 'radar':
+      explanationText.textContent = "The radar chart shows how different factors contribute to attrition risk. This helps identify which areas need the most attention in your retention strategies.";
+      attritionChart = new Chart(ctx, {
+        type: 'radar',
+        data: window.attritionData.radar,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: '#e2e8f0',
+                font: {
+                  family: "'Poppins', sans-serif"
+                }
+              }
+            }
+          },
+          scales: {
+            r: {
+              ticks: {
+                color: '#cbd5e1',
+                backdropColor: 'transparent'
+              },
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              angleLines: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              pointLabels: {
+                color: '#cbd5e1'
+              }
+            }
+          }
+        }
+      });
+      break;
+  }
+}
+
+function showSampleVisualization() {
+  // Sample data for demonstration
+  window.attritionData = {
+    pie: {
+      labels: ['Predicted to Leave', 'Predicted to Stay'],
+      datasets: [{
+        data: [35, 65],
+        backgroundColor: [ '#ef4444', '#22c55e' ],
+        borderWidth: 0
+      }]
+    },
+    bar: {
+      labels: ['Sales', 'R&D', 'HR', 'Marketing', 'Operations'],
+      datasets: [{
+        label: 'Attrition Rate %',
+        data: [42, 28, 15, 33, 24],
+        backgroundColor: '#06b6d4'
+      }]
+    },
+    line: {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      datasets: [{
+        label: 'Attrition Rate',
+        data: [18, 22, 15, 12, 10, 8, 9, 11, 14, 16, 20, 23],
+        borderColor: '#06b6d4',
+        tension: 0.3,
+        fill: true,
+        backgroundColor: 'rgba(6, 182, 212, 0.1)'
+      }]
+    },
+    radar: {
+      labels: ['Workload', 'Compensation', 'Work-Life Balance', 'Career Growth', 'Management', 'Job Satisfaction'],
+      datasets: [{
+        label: 'Attrition Factors',
+        data: [85, 65, 70, 60, 75, 55],
+        backgroundColor: 'rgba(6, 182, 212, 0.2)',
+        borderColor: '#06b6d4',
+        pointBackgroundColor: '#06b6d4'
+      }]
+    }
+  };
+  
+  updateChart();
+}
+
+// Prediction functions
+function fakePredict(age, income, years, overtime){
+  let score = Math.random() * 0.2;
+  if (overtime === 'Yes') score += 0.5;
+  if (income < 4000) score += 0.3;
+  if (years < 2) score += 0.2;
+  return Math.min(0.95, Math.max(0.05, score));
+}
+
+function predictSingle(){
+  let age = parseInt(document.getElementById('age').value);
+  let income = parseInt(document.getElementById('income').value);
+  let years = parseInt(document.getElementById('years').value);
+  let overtime = document.getElementById('overtime').value;
+  let prob = fakePredict(age, income, years, overtime);
+  let label = prob > 0.5 ? 'Yes' : 'No';
+  let alertBox = document.getElementById('singleResult');
+  
+  alertBox.style.display = 'flex';
+  alertBox.className = 'alert ' + (label === 'Yes' ? 'alert-danger' : 'alert-success');
+  
+  if (label === 'Yes') {
+    alertBox.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Predicted Attrition: <b>${label}</b> (${(prob * 100).toFixed(1)}% risk)`;
+  } else {
+    alertBox.innerHTML = `<i class="fas fa-check-circle"></i> Predicted Attrition: <b>${label}</b> (${(prob * 100).toFixed(1)}% risk)`;
+  }
+}
+
+let parsedData = [];
+function parseCSV(){
+  let file = document.getElementById('csvFile').files[0];
+  if (!file) {
+    alert('Please upload a CSV file first');
+    return;
+  }
+  
+  let reader = new FileReader();
+  reader.onload = function(e) {
+    let rows = e.target.result.split(/\r?\n/).filter(r => r.trim() !== '');
+    let headers = rows[0].split(',');
+    parsedData = rows.slice(1).map(r => {
+      let values = r.split(',');
+      let obj = {};
+      headers.forEach((h, i) => obj[h] = values[i] || '');
+      return obj;
+    });
+    
+    let table = document.getElementById('dataTable');
+    table.innerHTML = '<tr>' + headers.map(h => '<th>' + h + '</th>').join('') + '</tr>';
+    
+    parsedData.slice(0, 5).forEach(r => {
+      table.innerHTML += '<tr>' + headers.map(h => '<td>' + r[h] + '</td>').join('') + '</tr>';
+    });
+    
+    document.getElementById('preview').style.display = 'block';
+    document.getElementById('downloadBtn').style.display = 'none';
+  };
+  
+  reader.readAsText(file);
+}
+
+function runBatch(){
+  if (parsedData.length === 0) {
+    alert('No data loaded. Please upload a CSV file first.');
+    return;
+  }
+  
+  let yes = 0, no = 0;
+  let deptAttrition = {
+    'Sales': { yes: 0, total: 0 },
+    'Research & Development': { yes: 0, total: 0 },
+    'Human Resources': { yes: 0, total: 0 },
+    'Marketing': { yes: 0, total: 0 },
+    'Operations': { yes: 0, total: 0 }
+  };
+  
+  parsedData = parsedData.map(r => {
+    let age = parseInt(r.Age) || 30;
+    let income = parseInt(r.MonthlyIncome) || 5000;
+    let years = parseInt(r.YearsAtCompany) || 3;
+    let overtime = r.OverTime || 'No';
+    let department = r.Department || 'Sales';
+    
+    let prob = fakePredict(age, income, years, overtime);
+    let label = prob > 0.5 ? 'Yes' : 'No';
+    
+    if (label === 'Yes') yes++; 
+    else no++;
+    
+    // Track department attrition
+    if (deptAttrition[department]) {
+      deptAttrition[department].total++;
+      if (label === 'Yes') deptAttrition[department].yes++;
+    }
+    
+    return {...r, PredictedAttrition: label, Probability: (prob * 100).toFixed(1) + '%'};
+  });
+  
+  let headers = [...Object.keys(parsedData[0])];
+  let table = document.getElementById('dataTable');
+  table.innerHTML = '<tr>' + headers.map(h => '<th>' + h + '</th>').join('') + '</tr>';
+  
+  parsedData.slice(0, 5).forEach(r => {
+    table.innerHTML += '<tr>' + headers.map(h => '<td>' + r[h] + '</td>').join('') + '</tr>';
+  });
+  
+  document.getElementById('downloadBtn').style.display = 'inline-block';
+  document.getElementById('downloadBtn').onclick = function() {
+    let csv = headers.join(',') + '\n';
+    parsedData.forEach(r => {
+      csv += headers.map(h => r[h]).join(',') + '\n';
+    });
+    
+    let blob = new Blob([csv], {type: 'text/csv'});
+    let url = URL.createObjectURL(blob);
+    let a = document.createElement('a');
+    a.href = url;
+    a.download = 'predictions.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+  
+  // Prepare data for visualization
+  window.attritionData = {
+    pie: {
+      labels: ['Predicted to Leave', 'Predicted to Stay'],
+      datasets: [{
+        data: [yes, no],
+        backgroundColor: [ '#ef4444', '#22c55e' ],
+        borderWidth: 0
+      }]
+    },
+    bar: {
+      labels: Object.keys(deptAttrition),
+      datasets: [{
+        label: 'Attrition Rate %',
+        data: Object.values(deptAttrition).map(dept => 
+          dept.total > 0 ? Math.round((dept.yes / dept.total) * 100) : 0
+        ),
+        backgroundColor: '#06b6d4'
+      }]
+    },
+    line: {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      datasets: [{
+        label: 'Attrition Rate',
+        data: [18, 22, 15, 12, 10, 8, 9, 11, 14, 16, 20, 23],
+        borderColor: '#06b6d4',
+        tension: 0.3,
+        fill: true,
+        backgroundColor: 'rgba(6, 182, 212, 0.1)'
+      }]
+    },
+    radar: {
+      labels: ['Workload', 'Compensation', 'Work-Life Balance', 'Career Growth', 'Management', 'Job Satisfaction'],
+      datasets: [{
+        label: 'Attrition Factors',
+        data: [85, 65, 70, 60, 75, 55],
+        backgroundColor: 'rgba(6, 182, 212, 0.2)',
+        borderColor: '#06b6d4',
+        pointBackgroundColor: '#06b6d4'
+      }]
+    }
+  };
+  
+  // Update the chart with the new data
+  updateChart();
+}
+
+// Initialize sample visualization on page load
+document.addEventListener('DOMContentLoaded', function() {
+  showSampleVisualization();
+});
+</script>
+</body>
+</html>
